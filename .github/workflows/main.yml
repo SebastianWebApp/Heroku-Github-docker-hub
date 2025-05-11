@@ -129,6 +129,9 @@ jobs:
         run: |
           docker-compose -f docker-compose.yml build
           docker-compose -f docker-compose.yml push
+          # Verificar que las imágenes se enviaron correctamente
+          echo "Verificando imágenes enviadas a DockerHub:"
+          docker-compose -f docker-compose.yml images
 
   deploy-to-heroku:
     needs: build-and-push
@@ -155,10 +158,25 @@ jobs:
             exit 1
           fi
 
+      # Pull images from DockerHub
+      - name: Pull images from DockerHub
+        run: |
+          docker pull sebastianwebapp/heroku1:latest
+          if [ $? -ne 0 ]; then
+            echo "Error: Falló la descarga de la imagen sebastianwebapp/heroku1:latest"
+            exit 1
+          fi
+          docker pull sebastianwebapp/heroku2:latest
+          if [ $? -ne 0 ]; then
+            echo "Error: Falló la descarga de la imagen sebastianwebapp/heroku2:latest"
+            exit 1
+          fi
+
       # Push front image to Heroku
       - name: Push front image to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          # Usar la imagen ya enviada a DockerHub en el job build-and-push
           docker tag sebastianwebapp/heroku1:latest registry.heroku.com/front-app/web
           docker push registry.heroku.com/front-app/web
           if [ $? -ne 0 ]; then
@@ -173,8 +191,9 @@ jobs:
 
       # Push backend image to Heroku
       - name: Push backend image to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          # Usar la imagen ya enviada a DockerHub en el job build-and-push
           docker tag sebastianwebapp/heroku2:latest registry.heroku.com/back-app/web
           docker push registry.heroku.com/back-app/web
           if [ $? -ne 0 ]; then
