@@ -147,19 +147,10 @@ jobs:
           curl https://cli-assets.heroku.com/install.sh | sh
           heroku --version  # Verificar la instalación
 
-      # Log in to Heroku CLI
-      - name: Log in to Heroku CLI
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: |
-          echo "$HEROKU_API_KEY" | heroku login --api-key
-          if [ $? -ne 0 ]; then
-            echo "Error: Falló la autenticación en Heroku CLI"
-            exit 1
-          fi
-
       # Ensure container stack for Heroku apps
       - name: Ensure container stack for Heroku apps
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           heroku stack:set container -a front-app
           if [ $? -ne 0 ]; then
@@ -199,6 +190,8 @@ jobs:
 
       # Push front image to Heroku
       - name: Push front image to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           docker tag sebastianwebapp/heroku1:latest registry.heroku.com/front-app/web
           docker push registry.heroku.com/front-app/web
@@ -214,6 +207,8 @@ jobs:
 
       # Push backend image to Heroku
       - name: Push backend image to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           docker tag sebastianwebapp/heroku2:latest registry.heroku.com/back-app/web
           docker push registry.heroku.com/back-app/web
