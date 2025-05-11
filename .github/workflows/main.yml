@@ -78,17 +78,20 @@
 #           heroku container:release web --app back-app
 
 
+
+
 name: Heroku
 
 on:
   push:
     branches:
-      - main
+      - main  # Cambia según sea necesario
 
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
+      # Checkout the repository code
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -127,28 +130,59 @@ jobs:
           docker-compose -f docker-compose.yml build
           docker-compose -f docker-compose.yml push
 
+  deploy-to-heroku:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository code (necesario para acceder a docker-compose.yml si se necesita)
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-
-
-
+      # Install Heroku CLI
       - name: Install Heroku CLI
-        run: curl https://cli-assets.heroku.com/install.sh | sh
-
-      - name: Heroku container login
-        run: echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
-
-      - name: Deploy front to Heroku
         run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+          heroku --version  # Verificar la instalación
+
+      # Log in to Heroku Container Registry
+      - name: Log in to Heroku Container Registry
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
+          if [ $? -ne 0 ]; then
+            echo "Error: Falló la autenticación en Heroku Container Registry"
+            exit 1
+          fi
+
+      # Push front image to Heroku
+      - name: Push front image to Heroku
+        run: |
+          # Usar la imagen ya enviada a DockerHub en el job build-and-push
           docker tag sebastianwebapp/heroku1:latest registry.heroku.com/front-app/web
           docker push registry.heroku.com/front-app/web
+          if [ $? -ne 0 ]; then
+            echo "Error: Falló el envío de la imagen front a Heroku"
+            exit 1
+          fi
           heroku container:release web --app front-app
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          if [ $? -ne 0 ]; then
+            echo "Error: Falló la liberación del contenedor front en Heroku"
+            exit 1
+          fi
 
-      - name: Deploy backend to Heroku
+      # Push backend image to Heroku
+      - name: Push backend image to Heroku
         run: |
+          # Usar la imagen ya enviada a DockerHub en el job build-and-push
           docker tag sebastianwebapp/heroku2:latest registry.heroku.com/back-app/web
           docker push registry.heroku.com/back-app/web
+          if [ $? -ne 0 ]; then
+            echo "Error: Falló el envío de la imagen backend a Heroku"
+            exit 1
+          fi
           heroku container:release web --app back-app
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          if [ $? -ne 0 ]; then
+            echo "Error: Falló la liberación del contenedor backend en Heroku"
+            exit 1
+          fi
