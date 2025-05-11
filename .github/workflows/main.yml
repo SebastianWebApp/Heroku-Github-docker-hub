@@ -63,6 +63,12 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+
+      # Login a Heroku Container Registry
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
       # Login a Heroku Container Registry
       - name: Heroku container login
         run: echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
@@ -86,6 +92,12 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+
+# Login a Heroku Container Registry
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
       # Login a Heroku Container Registry
       - name: Heroku container login
         run: echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
