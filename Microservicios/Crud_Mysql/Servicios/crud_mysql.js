@@ -15,7 +15,7 @@ export const Crear = async (req, res) => {
     
       return {
         Estado: false,
-        Respuesta: "Base de datos no encontrada",
+        Respuesta: "Base de datos no encontrada20",
         Status: 400 
     };
     }
