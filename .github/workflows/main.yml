@@ -16,10 +16,7 @@ jobs:
       # Install Docker and Docker Compose
       - name: Install Docker and Docker Compose
         run: |
-          # Actualizar el índice de paquetes
           sudo apt-get update
-
-          # Instalar Docker si no está instalado
           if ! command -v docker &> /dev/null; then
             echo "Docker no encontrado. Instalando..."
             sudo apt-get install -y docker.io
@@ -27,7 +24,6 @@ jobs:
             echo "Docker ya está instalado."
           fi
 
-          # Instalar Docker Compose si no está instalado
           if ! command -v docker-compose &> /dev/null; then
             echo "Docker Compose no encontrado. Instalando..."
             sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -36,7 +32,6 @@ jobs:
             echo "Docker Compose ya está instalado."
           fi
 
-          # Verificar las versiones de Docker y Docker Compose
           docker --version
           docker-compose --version
 
@@ -46,73 +41,38 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}  # Asegúrate de que los secretos estén configurados
           password: ${{ secrets.DOCKER_PASSWORD }}
-          
 
       # Build and push Docker images using Docker Compose
       - name: Build and push Docker images with Docker Compose
         run: |
-          # Construir las imágenes con Docker Compose
           docker-compose -f docker-compose.yml build
-
-          # Subir las imágenes a Docker Hub
           docker-compose -f docker-compose.yml push
 
-
-
-  deploy-to-heroku-front:
+  deploy-to-heroku:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-
-      # Login a Heroku Container Registry
+      # Install Heroku CLI
       - name: Install Heroku CLI
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
 
-      # Login a Heroku Container Registry
+      # Heroku container login
       - name: Heroku container login
         run: echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
 
-      # Etiquetar y subir la imagen del frontend a Heroku
+      # Push front image to Heroku
       - name: Push front image to Heroku
         run: |
-          # Descargar la imagen desde Docker Hub
           docker pull sebastianwebapp/heroku1:latest
-          
-          # Etiquetar la imagen para Heroku
           docker tag sebastianwebapp/heroku1:latest registry.heroku.com/front-app/web
-          
-          # Subir la imagen al registro de Heroku
           docker push registry.heroku.com/front-app/web
-          
-          # Desplegar la imagen en Heroku
           heroku container:release web --app front-app
 
-  deploy-to-heroku-back:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-
-# Login a Heroku Container Registry
-      - name: Install Heroku CLI
-        run: |
-          curl https://cli-assets.heroku.com/install.sh | sh
-
-      # Login a Heroku Container Registry
-      - name: Heroku container login
-        run: echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
-
-      # Etiquetar y subir la imagen del backend (crud_mysql) a Heroku
+      # Push backend image to Heroku
       - name: Push backend image to Heroku
         run: |
-          # Descargar la imagen desde Docker Hub
           docker pull sebastianwebapp/heroku2:latest
-          
-          # Etiquetar la imagen para Heroku
           docker tag sebastianwebapp/heroku2:latest registry.heroku.com/back-app/web
-          
-          # Subir la imagen al registro de Heroku
           docker push registry.heroku.com/back-app/web
-          
-          # Desplegar la imagen en Heroku
           heroku container:release web --app back-app
