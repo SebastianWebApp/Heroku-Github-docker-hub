@@ -32,7 +32,7 @@ jobs:
             echo "Docker Compose no encontrado. Instalando..."
             sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
-          else:
+          else
             echo "Docker Compose ya está instalado."
           fi
 
@@ -47,6 +47,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}  # Asegúrate de que los secretos estén configurados
           password: ${{ secrets.DOCKER_PASSWORD }}
           
+
       # Build and push Docker images using Docker Compose
       - name: Build and push Docker images with Docker Compose
         run: |
@@ -55,6 +56,8 @@ jobs:
 
           # Subir las imágenes a Docker Hub
           docker-compose -f docker-compose.yml push
+
+
 
   deploy-to-heroku-front:
     needs: build-and-push
